@@ -63,7 +63,7 @@ ml-practice/
 
 ## 📈 ROC Curve
 
-![ROC Curve](assets/roc_curve.png)
+![ROC Curve](ML_practice/assets/roc_curve.png)
 
 ## ⚙️ Workflow
 
