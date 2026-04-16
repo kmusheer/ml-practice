@@ -9,7 +9,7 @@ def fill_missing(df):
 def encode_features(df) : 
     df = df.copy()  # safe practice
     # encode Sex
-    df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+    df["Sex"] = df["Sex"].map({"male": 0, "female": 1}).fillna(0)
     # encode Embarked
     embarked_dummies = pd.get_dummies(df["Embarked"], drop_first=True)
     df = pd.concat([df, embarked_dummies], axis=1)
@@ -32,10 +32,11 @@ def feature_engineering(df) :
 
 
 def feature_engineering_house_price(X) : 
+    X = X.copy() 
     reference_columns = X.columns
 
     # Numeric columns
-    numeric_cols = ['area', 'bedrooms', 'bathrooms', 'stories','parking']
+    numeric_cols = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
     X[numeric_cols] = X[numeric_cols].apply(pd.to_numeric, errors='coerce')
 
     # yes/no → 1/0

@@ -12,9 +12,9 @@ def evaluate_model(y_true, y_pred, y_prob=None):
     """
 
     acc = accuracy_score(y_true, y_pred)
-    prec = precision_score(y_true, y_pred)
-    rec = recall_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred, zero_division=0)
+    rec = recall_score(y_true, y_pred, zero_division=0)
+    f1 = f1_score(y_true, y_pred, zero_division=0)
 
     print("Confusion Matrix:\n", confusion_matrix(y_true, y_pred))
     print(f"Accuracy : {acc:.4f}")
