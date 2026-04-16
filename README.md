@@ -12,3 +12,33 @@ End-to-end Machine Learning implementations covering algorithms from scratch (Nu
 * ✅ Model comparison (LogReg, KNN, Tree, RF)
 * ✅ ROC-AUC and threshold tuning
 * ✅ Cross-validation for robust evaluation
+
+## 📂 Project Structure
+
+```
+ml-practice/
+│
+├── data/                  # Datasets
+│
+├── scratch/               # From-scratch implementations (NumPy)
+│   ├── linear_regression_numpy.py
+│   ├── logistic_regression_numpy.py
+│   ├── knn_numpy.py
+│   ├── kmeans_numpy.py
+│   └── pca_numpy.py
+│
+├── sklearn_pipeline/      # Sklearn-based pipelines
+│   ├── titanic_pipeline.py
+│   ├── iris_models.py
+│   ├── house_prices.py
+│   └── clustering.py
+│
+├── utils/                 # Shared utilities
+│   ├── preprocessing.py
+│   ├── evaluation.py
+│   └── visualization.py
+│
+├── main.py                # Entry point
+├── requirements.txt
+└── README.md
+```
