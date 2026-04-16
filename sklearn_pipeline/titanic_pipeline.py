@@ -18,7 +18,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
 def run_titanic():
      # Load data
@@ -52,19 +51,38 @@ def run_titanic():
     print(type(y_test))
 
     print("\n===== CROSS-VALIDATION =====")
-    cross_validate_model(LogisticRegression(max_iter=200), X, y, "Logistic Regression")
-    cross_validate_model(KNeighborsClassifier(n_neighbors=5), X, y, "KNN")
+    cross_validate_model(Pipeline([("scaler", StandardScaler()), ("model", LogisticRegression(max_iter=200))]),X, y, "Logistic Regression")
+
+    cross_validate_model(
+    Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", KNeighborsClassifier(n_neighbors=5))
+        ]),X, y, "KNN")
     cross_validate_model(DecisionTreeClassifier(max_depth=5), X, y, "Decision Tree")
     cross_validate_model(RandomForestClassifier(n_estimators=100), X, y, "Random Forest")
 
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
 
     results = []
 
-    results.append(train_and_evaluate(LogisticRegression(max_iter=200),X_train, X_test, y_train, y_test,"Logistic Regression"))
-    results.append(train_and_evaluate(KNeighborsClassifier(n_neighbors=5),X_train, X_test, y_train, y_test,"KNN"))
+    results.append(
+    train_and_evaluate(
+        Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", LogisticRegression(max_iter=200))
+        ]),
+        X_train, X_test, y_train, y_test, "Logistic Regression"
+        )
+    )
+
+    results.append(
+        train_and_evaluate(
+            Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", KNeighborsClassifier(n_neighbors=5))
+            ]),
+            X_train, X_test, y_train, y_test, "KNN"
+        )
+    )
     results.append(train_and_evaluate(DecisionTreeClassifier(max_depth=5),X_train, X_test, y_train, y_test,"Decision Tree"))
     results.append(train_and_evaluate(RandomForestClassifier(n_estimators=100),X_train, X_test, y_train, y_test,"Random Forest"))
     
@@ -112,15 +130,12 @@ def cross_validate_model(model, X, y, name):
     """
     Perform 5-fold cross-validation and return mean accuracy
     """
-    pipeline = Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", model)
-    ])
-    scores = cross_val_score(pipeline, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
 
     print(f"\n===== {name} Cross-Validation =====")
     print("Scores:", scores)
     print(f"Mean Accuracy: {scores.mean():.4f}")
     print(f"Std Dev      : {scores.std():.4f}")
+    print("👉 Stable model if std is low")
 
     return scores.mean()

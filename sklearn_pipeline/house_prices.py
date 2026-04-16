@@ -8,7 +8,10 @@ from sklearn.preprocessing import StandardScaler
 
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
+try:
+    from xgboost import XGBRegressor
+except ImportError:
+    XGBRegressor = None
 
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
@@ -44,6 +47,7 @@ def run_regression() :
     # ✅ ADD BASELINE HERE
     baseline = np.mean(y_train)
     y_pred_base = np.full_like(y_test, baseline)
+    print("\n👉 Model must beat baseline to be useful")
 
     print("\n===== BASELINE =====")
     print("MSE:", mean_squared_error(y_test, y_pred_base))
@@ -54,12 +58,8 @@ def run_regression() :
     cross_validate_regression(LinearRegression(), X, y, "Linear Regression")
     cross_validate_regression(Ridge(alpha=1.0), X, y, "Ridge")
     cross_validate_regression(RandomForestRegressor(n_estimators=100), X, y, "Random Forest")
-    cross_validate_regression(XGBRegressor(n_estimators=100), X, y, "XGBoost")
-
-    # Scaling (ONLY for linear models)
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    if XGBRegressor:
+        cross_validate_regression(XGBRegressor(n_estimators=100, learning_rate=0.1, verbosity=0), X, y, "XGBoost")
 
 
     results = []
@@ -70,26 +70,41 @@ def run_regression() :
         "MAE": mean_absolute_error(y_test, y_pred_base),
         "R2": r2_score(y_test, y_pred_base)
     })
-    results.append(train_and_evaluate_regression(LinearRegression(), X_train_scaled, X_test_scaled, y_train, y_test, "Linear Regression"))
-    results.append(train_and_evaluate_regression(Ridge(alpha=1.0), X_train_scaled, X_test_scaled, y_train, y_test, "Ridge"))
+    results.append(
+        train_and_evaluate_regression(
+            Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", LinearRegression())
+            ]),
+            X_train, X_test, y_train, y_test, "Linear Regression"
+        )
+    )
+
+    results.append(
+        train_and_evaluate_regression(
+            Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", Ridge(alpha=1.0))
+            ]),
+            X_train, X_test, y_train, y_test, "Ridge"
+        )
+    )
 
     # Tree models (NO scaling)
     results.append(train_and_evaluate_regression(RandomForestRegressor(n_estimators=100, random_state=42),X_train, X_test, y_train, y_test, "Random Forest"))
-
-    results.append(train_and_evaluate_regression(XGBRegressor(n_estimators=100, learning_rate=0.1),X_train, X_test, y_train, y_test, "XGBoost"))
+    if XGBRegressor:
+        results.append(train_and_evaluate_regression(XGBRegressor(n_estimators=100, learning_rate=0.1),X_train, X_test, y_train, y_test, "XGBoost"))
 
 
     print("\n===== Feature importance =====")
     rf = RandomForestRegressor(n_estimators=100, random_state=42)
     rf.fit(X_train, y_train)
-    feature_importance = pd.Series(
-    rf.feature_importances_,
-    index=X.columns
-    )
+    feature_importance = pd.Series(rf.feature_importances_, index=X.columns)
 
     feature_importance = feature_importance.sort_values(ascending=False)
+    print(feature_importance.head(10))
 
-    feature_importance.plot(kind='bar')
+    feature_importance.head(10).plot(kind='bar')
     plt.title("Feature Importance")
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -105,24 +120,16 @@ def run_regression() :
     best_model = results_df.sort_values(by="R2", ascending=False).iloc[0]
     print(f"Best model based on R2: {best_model['Model']}")
     print("R2 measures how well variance is explained.")
-
+    
 
 def cross_validate_regression(model, X, y, name) :
-    if isinstance(model, (LinearRegression, Ridge)):
-        pipeline = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", model)
-        ])
-    else:
-        pipeline = Pipeline([
-            ("model", model)
-        ])
 
-    scores = cross_val_score(pipeline,X,y, cv=5, scoring="r2")
+    scores = cross_val_score(model,X,y, cv=5, scoring="r2")
     print(f"\n===== {name} Cross-Validation =====")
     print("Scores:", scores)
     print(f"Mean R2: {scores.mean():.4f}")
     print(f"Std Dev: {scores.std():.4f}")
+    print("👉 Stable model if std is low")
 
     return scores.mean()
 
@@ -141,7 +148,7 @@ def train_and_evaluate_regression(model, X_train, X_test, y_train, y_test, name)
     print("R2 :", r2)
 
      # Residual plot (IMPORTANT)
-    plot_residuals(y_test,y_pred, name)
+    plot_residuals(y_test, y_pred, name)
 
 
     return {
