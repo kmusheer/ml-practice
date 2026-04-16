@@ -1,0 +1,36 @@
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score,
+    f1_score, confusion_matrix, roc_auc_score
+)
+
+def evaluate_model(y_true, y_pred, y_prob=None):
+    """
+    Evaluate classification model.
+
+    Returns:
+        dict of metrics
+    """
+
+    acc = accuracy_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred)
+    rec = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+
+    print("Confusion Matrix:\n", confusion_matrix(y_true, y_pred))
+    print(f"Accuracy : {acc:.4f}")
+    print(f"Precision: {prec:.4f}")
+    print(f"Recall   : {rec:.4f}")
+    print(f"F1 Score : {f1:.4f}")
+
+    auc = None
+    if y_prob is not None:
+        auc = roc_auc_score(y_true, y_prob)
+        print(f"AUC      : {auc:.4f}")
+
+    return {
+        "Accuracy": acc,
+        "Precision": prec,
+        "Recall": rec,
+        "F1": f1,
+        "AUC": auc
+    }
